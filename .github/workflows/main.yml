@@ -1,0 +1,565 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Build Packages
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:        
+      - v*
+    branches: [ master, dev, ci]
+  pull_request:
+    branches: [ master ]
+  # # Allows you to run this workflow manually from the Actions tab
+  # workflow_dispatch:
+
+jobs:
+  build-app:
+    name: Build Base Packages
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        ARCH: ['x64']
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+
+      - name: Prepare
+        run: |
+          sudo apt install wget exiftool
+          sudo npm install asar -g
+          npm install
+          echo "$UID, $GID"
+
+      - name: Generate TAG
+        id: Tag
+        run: |
+          tag='continuous'
+          name='Continuous Build'
+          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+            tag='${{ github.ref_name }}'
+            name='${{ github.ref_name }}'
+          fi
+          echo "tag result: $tag - $name"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=name::$name"
+         
+      - name: Build
+        env:
+          BUILD_ARCH: ${{ matrix.ARCH }}
+        run: |
+          ls -l
+          tools/update-bilibili
+          tools/fix-other.sh
+          tools/area-unlimit.sh
+          mv tmp/bili/resources/* app
+  
+      - name: Compress Resources
+        run: |
+          ls -l
+          mkdir -p tmp/src
+          mkdir -p tmp/build
+          tar -zcf tmp/src/bilibili-asar-${{ steps.tag.outputs.tag }}.tar.gz bin app # electron
+          cp tmp/src/bilibili-asar-${{ steps.tag.outputs.tag }}.tar.gz tmp/build/bilibili-asar-${{ steps.tag.outputs.tag }}.tar.gz
+          tar -zcf tmp/build/extensions-${{ steps.tag.outputs.tag }}.tar.gz extensions
+
+      - name: Fix name for continuous
+        if: steps.tag.outputs.tag == 'continuous'
+        run: |
+          version=$(cat conf/bilibili_version)
+          mv ./tmp/build/bilibili-asar-continuous.tar.gz ./tmp/build/bilibili-asar-${version}-continuous.tar.gz
+          mv ./tmp/build/extensions-${{ steps.tag.outputs.tag }}.tar.gz ./tmp/build/extensions-${version}-continuous.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Artifact name
+          name: bilibili-app.src
+          path: tmp/src
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Artifact name
+          name: bilibili-app.build
+          path: tmp/build
+
+  build-linux-simple:
+    name: Build Linux Archive
+    needs:
+      - build-app
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        ARCH: ['x64', 'arm64', 'loong64', 'loongarch64']
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: bilibili-app.src
+          path: tmp/src
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+
+      - name: Prepare
+        env:
+          BUILD_ARCH: ${{ matrix.ARCH }}
+        run: |
+          sudo apt install wget exiftool
+          sudo npm install asar -g
+          echo "$UID, $GID"
+          ls -l
+          tools/build-prepare.sh
+
+      - name: Generate TAG
+        id: Tag
+        run: |
+          tag='continuous'
+          name='Continuous Build'
+          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+            tag='${{ github.ref_name }}'
+            name='${{ github.ref_name }}'
+          fi
+          echo "tag result: $tag - $name"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=name::$name"
+         
+      - name: Build
+        env:
+          BUILD_ARCH: ${{ matrix.ARCH }}
+        run: |
+          ls -l
+          tools/update-electron
+  
+      - name: Compress Resources
+        run: |
+          ls -l
+          mkdir -p tmp/src
+          mkdir -p tmp/build
+          version=$(cat conf/bilibili_version)
+          tar -zcf tmp/build/bilibili-${version}-${{ steps.tag.outputs.tag }}-${{ matrix.ARCH }}.tar.gz bin app electron
+          
+      - name: Fix name for continuous
+        if: steps.tag.outputs.tag != 'continuous'
+        run: |
+          version=$(cat conf/bilibili_version)
+          mv ./tmp/build/bilibili-${version}-${{ steps.tag.outputs.tag }}-${{ matrix.ARCH }}.tar.gz ./tmp/build/bilibili-${{ steps.tag.outputs.tag }}-${{ matrix.ARCH }}.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Artifact name
+          name: bilibili-${{ matrix.ARCH }}.build
+          path: tmp/build
+
+  build-linux-package:
+    name: Build Linux Package
+    needs:
+      - build-app
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        ARCH: ['x64', 'loong64']
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: bilibili-app.src
+          path: tmp/src
+
+      - name: Prepare
+        env:
+          BUILD_ARCH: ${{ matrix.ARCH }}
+        run: |
+          sudo npm install asar -g
+          corepack enable pnpm
+          corepack use pnpm@latest
+          pnpm install
+          echo "$UID, $GID"
+
+      - name: Generate TAG
+        id: Tag
+        run: |
+          tag='continuous'
+          name='Continuous Build'
+          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+            tag='${{ github.ref_name }}'
+            name='${{ github.ref_name }}'
+          fi
+          echo "tag result: $tag - $name"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=name::$name"
+         
+      - name: Build
+        env:
+          BUILD_VERSION: ${{ steps.tag.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_ARCH: ${{ matrix.ARCH }}
+        run: |
+          ls -l
+          mkdir -p tmp/build
+          tools/build-prepare.sh
+          asar e app/app.asar app/app
+          if [[ "$BUILD_ARCH" == loong* ]];then
+            pnpm run pkg-loongarch
+          else
+            pnpm run pkg-linux
+          fi
+          rm -rf tmp/build/*-unpacked
+          # tools/build-appimage.sh ${{ steps.tag.outputs.tag }} ${{ matrix.ARCH }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Artifact name
+          name: bilibili-${{ matrix.ARCH }}.build
+          path: tmp/build
+
+  build-win:
+    name: Build Windows
+    needs:
+      - build-app
+    runs-on: ubuntu-20.04
+    container: scottyhardy/docker-wine
+    strategy:
+      matrix:
+        node-version: [16.x]
+        ARCH: ['x64']
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: bilibili-app.src
+          path: tmp/src
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Prepare
+        run: |
+          set -x
+          echo $SHELL
+          cat /etc/issue
+          apt update
+          npm install asar -g
+          npm install
+          echo "$UID"
+
+      - name: Generate TAG
+        id: Tag
+        run: |
+          tag='continuous'
+          name='Continuous Build'
+          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+            tag='${{ github.ref_name }}'
+            name='${{ github.ref_name }}'
+          fi
+          echo "tag result: $tag - $name"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=name::$name"
+         
+      - name: Build
+        env:
+          BUILD_VERSION: ${{ steps.tag.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_ARCH: ${{ matrix.ARCH }}
+        run: |
+          ls -l
+          # from @Xarth-Mai
+          sudo chown -R $(whoami) /github/home
+          mkdir -p tmp/build
+          tools/build-prepare.sh
+          asar e app/app.asar app/app
+          npm run pkg-win
+          rm -rf tmp/build/*-unpacked
+          # tools/build-appimage.sh ${{ steps.tag.outputs.tag }} ${{ matrix.ARCH }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Artifact name
+          name: bilibili-${{ matrix.ARCH }}.build
+          path: tmp/build
+
+  build-deepin:
+    name: Build Deepin Package
+    needs:
+      - build-app
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        ARCH: ['x64', 'arm64', 'loong64']
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: bilibili-app.src
+          path: tmp/src
+
+      - name: Prepare
+        run: |
+          sudo apt update && sudo apt-get install -y build-essential fakeroot devscripts debhelper # debmake lintian pbuilder
+
+      - name: Generate TAG
+        id: Tag
+        run: |
+          tag='continuous'
+          name='Continuous Build'
+          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+            tag='${{ github.ref_name }}'
+            name='${{ github.ref_name }}'
+          else
+            BILIBILI_VERSION=$(cat conf/bilibili_version)
+            tag="v${BILIBILI_VERSION}-${tag}"
+          fi
+          echo "tag result: $tag - $name"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=name::$name"
+      # https://stackoverflow.com/questions/61096521/how-to-use-gpg-key-in-github-actions
+
+      - name: Build Deb Package
+        env:
+          BUILD_ARCH: ${{ matrix.ARCH }}
+          BUILD_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          export BUILD_VERSION=${{ steps.tag.outputs.tag }}
+          ls -l
+          mkdir -p tmp/build
+          tools/build-prepare.sh
+          echo "${{ matrix.ARCH }}"
+          if [ "${{ matrix.ARCH }}" == "arm64" ];then
+            export LD_LIBRARY_PATH="/usr/aarch64-linux-gnu/lib"
+          fi
+          tools/update-electron
+          if [ "$BUILD_ARCH" == "x64" ];then
+            export BUILD_ARCH="amd64"
+          fi
+          dpkg --version
+          if [[ "$BUILD_ARCH" == loong* ]];then
+            echo "build loong"
+            export DOCKER_UID=$(id -u)
+            export DOCKER_GID=$(id -g)
+            cat /etc/passwd
+            env
+            tools/build-deepin-loongarch.sh
+            if [ -f tmp/exit_code ];then
+              exit $(cat tmp/exit_code)
+            fi
+          else
+            echo "build simple"
+            tools/build-deepin.sh ${{ steps.tag.outputs.tag }}
+            mkdir -p info/DEBIAN
+            dpkg -e ./tmp/build/io.github.msojocs.bilibili_*.deb info/DEBIAN
+            ls -l info/DEBIAN
+            rm -rf info
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          # Artifact name
+          name: bilibili-${{ matrix.ARCH }}.build
+          path: tmp/build
+
+  # build-arch:
+  #   name: Build ArchLinux Package
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 30
+  #   strategy:
+  #     matrix:
+  #       node-version: [16.x]
+  #       ARCH: ['x86_64']
+  #       # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: 'recursive'
+  #     - name: Use Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
+  #         cache: 'npm'
+
+  #     - name: Prepare
+  #       run: |
+  #         cd compiler && npm install
+  #         npm install node-gyp nw-gyp npm -g
+  #         node-gyp install
+  #         cat /etc/passwd
+
+  #     - name: Generate TAG
+  #       id: Tag
+  #       run: |
+  #         tag='continuous'
+  #         name='Continuous Build'
+  #         if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+  #           tag='${{ github.ref_name }}'
+  #           name='${{ github.ref_name }}'
+  #         fi
+  #         echo "tag result: $tag - $name"
+  #         echo "::set-output name=tag::$tag"
+  #         echo "::set-output name=name::$name"
+         
+  #     - name: Build ArchLinux Package
+  #       uses: countstarlight/arch-makepkg-action@master
+  #       env:
+  #         BUILD_VERSION: ${{ steps.tag.outputs.tag }}
+  #       with:
+  #         repos: >
+  #           archlinuxcn=https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/$arch
+  #         before: "tools/build-aur.sh && sudo pacman -S --noconfirm archlinuxcn-keyring"
+  #         packages: >
+  #           gconf
+  #           p7zip
+  #           libxkbfile
+  #           python2
+  #           openssl
+  #           gcc
+  #           make
+  #           libssh2
+  #           krb5
+  #           wget
+  #         scripts: "cd tmp/AUR && makepkg && ls -l && cd ../../"
+
+  #     - name: Fix Permissions
+  #       run: |
+  #         sudo chmod -R 0777 tmp
+  #         mkdir -p tmp/build
+  #         mv tmp/AUR/*.pkg.* tmp/build
+  #         cd tmp/build
+  #         for file in `ls *.pkg.*`;do mv $file `echo $file|sed 's/:/-/g'`;done;
+  #         ls -l
+
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         # Artifact name
+  #         name: bilibili-${{ matrix.ARCH }}.build
+  #         path: tmp/build
+
+  # build-snap:
+  #   name: Build Snap Package
+  #   runs-on: ubuntu-18.04
+  #   timeout-minutes: 30
+  #   strategy:
+  #     matrix:
+  #       node-version: [16.x]
+  #       ARCH: ['x86_64']
+  #       # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: 'recursive'
+  #     - name: Install Snapcraft
+  #       uses: samuelmeuli/action-snapcraft@v1
+  #       with:
+  #         use_lxd: true
+
+  #     - name: Prepare
+  #       run: |
+  #         cd compiler && npm install
+  #         git --version
+  #         git --help
+
+  #     # You can now run Snapcraft shell commands
+  #     - name: Build snap
+  #       run: sg lxd -c 'snapcraft --use-lxd'
+
+  #     - name: move file
+  #       run: |
+  #         mkdir -p tmp/build
+  #         mv *.snap tmp/build
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         # Artifact name
+  #         name: bilibili-${{ matrix.ARCH }}.build
+  #         path: tmp/build
+
+  upload:
+    name: Create release and upload artifacts
+    needs:
+      - build-linux-simple
+      - build-linux-package
+      - build-win
+      - build-deepin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+      - name: Inspect directory after downloading artifacts
+        run: |
+          rm -rf ./bilibili-app.src
+          ls -alFR
+
+      - name: Generate TAG
+        id: Tag
+        run: |
+          tag='continuous'
+          name='Continuous Build'
+          if [ 'true' == ${{ startsWith(github.ref, 'refs/tags/') }} ];then
+            tag='${{ github.ref_name }}'
+            name='${{ github.ref_name }}'
+          fi
+          echo "tag result: $tag - $name"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=name::$name"
+
+      - name: Create release and upload artifacts
+        if: startsWith(github.ref, 'refs/heads/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt install -y fuse
+          wget -q https://github.com/TheAssassin/pyuploadtool/releases/download/continuous/pyuploadtool-x86_64.AppImage
+          chmod +x pyuploadtool-x86_64.AppImage
+          ./pyuploadtool-x86_64.AppImage \
+          **build/*.tar.gz \
+          **build/*.AppImage \
+          **build/*.deb \
+          **build/*.exe \
+          **build/*.rpm
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          # note you'll typically need to create a personal access token
+          # with permissions to create releases in the other repo
+          name: ${{ steps.tag.outputs.name }}
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: |
+            **build/*.tar.gz
+            **build/*.AppImage
+            **build/*.deb
+            **build/*.exe
+            **build/*.rpm
