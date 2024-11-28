@@ -402,12 +402,12 @@ const sleep = (ms) => {
     try{
       const createElement = (apeedRate) => {
         const rate = document.createElement('li')
-        rate.className = "cpx-player-ctrl-playbackrate-menu-item"
+        rate.className = "bpx-player-ctrl-playbackrate-menu-item"
         rate.dataset.value = `${apeedRate}`
         rate.textContent = `${apeedRate}x`
         return rate
       }
-      const speedRate = window.danmakuManage.nodes.controlBottomRight.querySelector('.cpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
+      const speedRate = window.danmakuManage.nodes.controlBottomRight.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
       
       speedRate.after(createElement(1.75))
       speedRate.before(createElement(4.0))
