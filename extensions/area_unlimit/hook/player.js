@@ -407,7 +407,7 @@ const sleep = (ms) => {
         rate.textContent = `${apeedRate}x`
         return rate
       }
-      const speedRate = window.danmakuManage.nodes.controlBottomRight.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
+      const speedRate = document.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
       
       speedRate.after(createElement(1.75))
       speedRate.before(createElement(4.0))
@@ -416,7 +416,7 @@ const sleep = (ms) => {
       speedRate.before(createElement(2.5))
       clearInterval(rate175check)
     }catch(err){
-      // console.error('添加1.75倍速失败：', err)
+      console.error('添加1.75倍速失败：', err)
     }
   }, 1000)
 })()
