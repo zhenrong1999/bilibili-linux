@@ -41,7 +41,7 @@ notice "屏蔽检测"
 # grep -lr 'if (!dj' --exclude="app.asar" .
 # sed -i 's#if (!dj#if(false\&\&!dj#g' "app/main/app.js"
 # ==='win';if(! 警告11
-grep -lr 'if (!iG)' --exclude="app.asar" .
+# grep -lr 'if (!iG)' --exclude="app.asar" .
 sed -i 's#if (!iG)#if(false\&\&!iG)#' "app/main/app.js"
 # global['bootstrapApp']();
 # grep -lr 'if (dj)' --exclude="app.asar" .
@@ -66,7 +66,7 @@ cat "app/main/assets/bili-bridge.js" >> "app/main/assets/temp.js"
 rm "app/main/assets/bili-bridge.js"
 mv "app/main/assets/temp.js" "app/main/assets/bili-bridge.js"
 cp "$root_dir/res/protos/dynamic.proto" "app/main/assets/protos/dynamic.proto"
-mkdir tmp
+mkdir -p tmp
 cd tmp
 echo "{}" > package.json
 npm install @grpc/grpc-js
