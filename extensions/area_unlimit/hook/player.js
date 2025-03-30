@@ -422,13 +422,13 @@ const sleep = (ms) => {
         rate.textContent = `${apeedRate}x`
         return rate
       }
-      const speedRate = window.danmakuManage.nodes.controlBottomRight.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
+      // const speedRate = window.danmakuManage.nodes.controlBottomRight.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
       
-      speedRate.after(createElement(1.75))
-      speedRate.before(createElement(4.0))
-      speedRate.before(createElement(3.5))
-      speedRate.before(createElement(3.0))
-      speedRate.before(createElement(2.5))
+      // speedRate.after(createElement(1.75))
+     //  speedRate.before(createElement(4.0))
+      // speedRate.before(createElement(3.5))
+      // speedRate.before(createElement(3.0))
+      // speedRate.before(createElement(2.5))
       {
         let originalFilter = window.danmakuManage.danmaku.config.fn.filter
         const customFilter = (t) => {
@@ -470,6 +470,29 @@ const sleep = (ms) => {
       clearInterval(rate175check)
     }catch(err){
       log.error('添加1.75倍速异常：', err)
+    }
+  }, 1000)
+  // 1.75倍速
+  let rate175check2 = setInterval(()=>{
+    // console.log('1.75倍速')
+    try{
+      const createElement = (apeedRate) => {
+        const rate = document.createElement('li')
+        rate.className = "bpx-player-ctrl-playbackrate-menu-item"
+        rate.dataset.value = `${apeedRate}`
+        rate.textContent = `${apeedRate}x`
+        return rate
+      }
+      const speedRate = document.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
+      
+      speedRate.after(createElement(1.75))
+      speedRate.before(createElement(4.0))
+      speedRate.before(createElement(3.5))
+      speedRate.before(createElement(3.0))
+      speedRate.before(createElement(2.5))
+      clearInterval(rate175check)
+    }catch(err){
+      console.error('Backup 添加1.75倍速失败：', err)
     }
   }, 1000)
 })()
