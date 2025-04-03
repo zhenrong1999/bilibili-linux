@@ -490,7 +490,7 @@ const sleep = (ms) => {
       speedRate.before(createElement(3.5))
       speedRate.before(createElement(3.0))
       speedRate.before(createElement(2.5))
-      clearInterval(rate175check)
+      clearInterval(rate175check2)
     }catch(err){
       console.error('Backup 添加1.75倍速失败：', err)
     }
