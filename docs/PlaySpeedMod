@@ -1,0 +1,12 @@
+const createElement = (apeedRate) => {
+          const rate = document.createElement('li')
+          rate.className = "bpx-player-ctrl-playbackrate-menu-item"
+          rate.dataset.value = `${apeedRate}`
+          rate.textContent = `${apeedRate}x`
+          return rate
+        }
+const speedRate = document.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
+speedRate.before(createElement(4.0))
+speedRate.before(createElement(3.5))
+speedRate.before(createElement(3.0))
+speedRate.before(createElement(2.5))
