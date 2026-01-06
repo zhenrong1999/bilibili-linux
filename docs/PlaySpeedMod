@@ -6,11 +6,11 @@ const createElement = (apeedRate) => {
           return rate
         }
 const speedRate = document.querySelector('.bpx-player-ctrl-playbackrate-menu > li:nth-child(1)')
-speedRate.before(createElement(4.0))
+speedRate.before(createElement(4.00))
 speedRate.before(createElement(3.75))
-speedRate.before(createElement(3.5))
+speedRate.before(createElement(3.50))
 speedRate.before(createElement(3.25))
-speedRate.before(createElement(3.0))
+speedRate.before(createElement(3.00))
 speedRate.before(createElement(2.75))
-speedRate.before(createElement(2.5))
+speedRate.before(createElement(2.50))
 speedRate.before(createElement(2.25))
