@@ -15,7 +15,7 @@ notice() {
 }
 
 # 大于28.2.1有问题：https://github.com/msojocs/bilibili-linux/issues/170, https://github.com/electron/electron/issues/42519
-electron_version="28.2.1"
+electron_version="39.3.0"
 if [ "$BUILD_ARCH" == "" ];then
   BUILD_ARCH="x64"
 elif [ "$BUILD_ARCH" == "amd64" ];then
