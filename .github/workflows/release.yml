@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
         ARCH: ['x64']
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
@@ -36,7 +36,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.21.0'
+          node-version: '24.13.0'
 
       - name: Prepare
         run: |
@@ -107,7 +107,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [24.x]
         ARCH: ['x64', 'arm64', 'loong64', 'loongarch64']
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
@@ -182,7 +182,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [24.x]
         ARCH: ['x64', 'loong64']
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
@@ -195,7 +195,7 @@ jobs:
           path: tmp/src
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Prepare
         env:
@@ -254,7 +254,7 @@ jobs:
     container: scottyhardy/docker-wine
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [24.x]
         ARCH: ['x64']
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
@@ -268,7 +268,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Prepare
         run: |
           set -x
@@ -519,10 +519,10 @@ jobs:
   upload:
     name: Create release and upload artifacts
     needs:
-      - build-linux-simple
-      - build-linux-package
+      # - build-linux-simple
+      # - build-linux-package
       - build-win
-      - build-deepin
+      # - build-deepin
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
