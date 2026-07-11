@@ -5,6 +5,7 @@
 
 // 导入 EventEmitter 类型
 import { EventEmitter } from 'events';
+import https from "https";
 
 // 正确定义 NodeJS 全局变量
 declare global {
@@ -42,6 +43,7 @@ declare global {
       loginRiskWindow: object
     }
   }
+  var server: ReturnType<typeof https.createServer>
 }
 
 // #region Store
