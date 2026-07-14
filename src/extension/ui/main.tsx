@@ -98,7 +98,15 @@ i18n
           "PAC代理": "PAC Proxy",
           "例如": "e.g.",
           "Access Token管理": "Access Token Management",
-          "AccessToken用于获取外区番剧的播放链接。": "AccessToken is used to get playback links for overseas anime."
+          "AccessToken用于获取外区番剧的播放链接。": "AccessToken is used to get playback links for overseas anime.",
+          "DNS 设置": "DNS Settings",
+          "内置DNS解析器": "Built-in DNS Resolver",
+          "安全DNS模式": "Secure DNS Mode",
+          "自动": "Automatic",
+          "安全": "Secure",
+          "DoH服务器": "DoH Servers",
+          "每行一个DoH服务器地址，如：https://cloudflare-dns.com/dns-query": "One DoH server URL per line, e.g.: https://cloudflare-dns.com/dns-query",
+          "附加DNS查询类型": "Additional DNS Query Types"
         }
       },
       zhCn: {

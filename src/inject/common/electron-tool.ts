@@ -78,6 +78,20 @@ export const initializeGlobalData = () => {
   }
 }
 
+export const restoreDnsConfig = () => {
+  try {
+    const dnsConfPath = path.join(app.getPath("userData"), "bilibili-dns.conf");
+    if (fs.existsSync(dnsConfPath)) {
+      const data = fs.readFileSync(dnsConfPath, "utf-8");
+      const config = JSON.parse(data);
+      app.configureHostResolver(config);
+      log.info("dnsConfig restored from file:", dnsConfPath);
+    }
+  } catch (e) {
+    log.error("restoreDnsConfig error:", e);
+  }
+}
+
 export const replaceBrowserWindow = () => {
   const originalBrowserWindow = BrowserWindow;
   const hookBrowserWindow = (OriginalBrowserWindow: typeof BrowserWindow) => {
@@ -139,6 +153,21 @@ export const replaceBrowserWindow = () => {
           }
           log.info("dataSync end.");
           event.returnValue = "ok";
+        } else if (args[0] === "config/dnsConfig") {
+          log.info("receive config/dnsConfig:", args[1]);
+          try {
+            const config = JSON.parse(args[1]);
+            // 保存到文件以供重启后恢复
+            const dnsConfPath = path.join(app.getPath("userData"), "bilibili-dns.conf");
+            fs.writeFileSync(dnsConfPath, args[1], "utf-8");
+            // 应用 DNS 配置
+            app.configureHostResolver(config);
+            log.info("dnsConfig applied");
+            event.returnValue = "ok";
+          } catch (e) {
+            log.error("dnsConfig error:", e);
+            event.returnValue = "error";
+          }
         }
       });
       // DevTools切换

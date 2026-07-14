@@ -1,6 +1,6 @@
 import { app } from "electron";
 import { createBilibiliServer } from "./common/bilibili";
-import { electronOverwrite, electronOverwriteAfterReady, hookIsPackaged, initializeGlobalData, nodeJsOverWrite, parseElectronFlag, registerExtension, registerIpcHandle, registerProtocol, replaceBrowserWindow } from "./common/electron-tool";
+import { electronOverwrite, electronOverwriteAfterReady, hookIsPackaged, initializeGlobalData, nodeJsOverWrite, parseElectronFlag, registerExtension, registerIpcHandle, registerProtocol, replaceBrowserWindow, restoreDnsConfig } from "./common/electron-tool";
 import { createLogger, Logger } from "../common/log";
 (() => {
   const log = createLogger('Index')
@@ -17,6 +17,7 @@ import { createLogger, Logger } from "../common/log";
   module.require("./main/app.js")
   // 启动app
   app.whenReady().then(() => {
+    restoreDnsConfig()
     registerProtocol()
     registerExtension()
     electronOverwriteAfterReady()
