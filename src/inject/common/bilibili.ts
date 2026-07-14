@@ -13,22 +13,39 @@ export const createBilibiliServer = () => {
       cert: "-----BEGIN CERTIFICATE-----\nMIIEPzCCAyegAwIBAgIUJVg1qdKcUuryV+2IxAn9teS5qu0wDQYJKoZIhvcNAQEL\nBQAwga0xCzAJBgNVBAYTAkNOMREwDwYDVQQIDAhTaGFuZ0hhaTERMA8GA1UEBwwI\nU2hhbmdIYWkxLzAtBgNVBAoMJlNoYW5naGFpIEJpbGliaWxpIFRlY2hub2xvZ3kg\nQ28uLCBMdGQuMREwDwYDVQQLDAhiaWxpYmlsaTEPMA0GA1UEAwwGYmlsaXBjMSMw\nIQYJKoZIhvcNAQkBFhRzaGVudGFvQGJpbGliaWxpLmNvbTAgFw0yMzEwMjQwNTIy\nMTNaGA8yMTIzMDkzMDA1MjIxM1owga0xCzAJBgNVBAYTAkNOMREwDwYDVQQIDAhT\naGFuZ0hhaTERMA8GA1UEBwwIU2hhbmdIYWkxLzAtBgNVBAoMJlNoYW5naGFpIEJp\nbGliaWxpIFRlY2hub2xvZ3kgQ28uLCBMdGQuMREwDwYDVQQLDAhiaWxpYmlsaTEP\nMA0GA1UEAwwGYmlsaXBjMSMwIQYJKoZIhvcNAQkBFhRzaGVudGFvQGJpbGliaWxp\nLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALX2g7x/HZjGQ60a\nh6p9+GxdF8W+r+aGQD71yn419X5NoqzwCnuffDYj3snBhRu0pgh8v7P/UYc5Ll+n\nyQlpVwUzHHyKjBbn9uK1F54cLVP4wKo7Ketd+FTngM0lWQaFexYDHACgfMNVSH1r\nHbjwRYlHfCtNW4Igrc0zWIWzYoi1A1r0JzIu3Newd8qJ8a7RJ7toMk0hVHdHgHhC\n28XNsR8uveS+rRAYCcF5nTRuU8TX2UHh0geLho95DPkfRvJKm+YJbusNqgKygnTC\n/8y1lqdmM5F6mGVjcTuXOJSkvW2gXiqjAHk6BvbT6vxXCRzc42CMyk6YffN7qSL5\nZc8QU1MCAwEAAaNTMFEwHQYDVR0OBBYEFNCVw8dStnHz5VY1MEIDI8dPR9t2MB8G\nA1UdIwQYMBaAFNCVw8dStnHz5VY1MEIDI8dPR9t2MA8GA1UdEwEB/wQFMAMBAf8w\nDQYJKoZIhvcNAQELBQADggEBAAiisyz9WJNmyYthp7hRHxt8ptV8UefFOVt1oJfE\nuicHBoXBCWKOb2sYbJUOnpPQrCGTLxa0sDUXu1OvwJP2YrKhbiW4ZLefWlVM/Rx0\nJpcbbVvrR5puMfwxKrW5HT+Uafq/bFe/fJPTdHmLU9vAqkAcqZxrPhNjz1O88wp4\ntuyLcVxHcwr4ZvHFcCMo+Gkph76QY8clcOtyTF3p3U2HCFGu3I8WvJcEexjjanx6\nztZgsc9zCVdDWS5RFsEMXPj9+vTvLuo1S6z0UhMnKo4yYBCb/6gmJRJMrZ7beifP\niVFRvhO43BAkKW04hRC/nsliqcedqetuZbpTjq98g9eEDow=\n-----END CERTIFICATE-----\n",
     },
     (req, res) => {
-      const renderPath = path.resolve(__dirname, "./render");
-      const url = req.url?.split("?")[0];
-      const p = path.resolve(renderPath, `.${url}`);
-      log.info(url);
-      if (url?.endsWith(".js")) {
-        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      try {
+        const renderPath = path.resolve(__dirname, "./render");
+        const url = req.url?.split("?")[0];
+        const p = path.resolve(renderPath, `.${url}`);
+        log.info(url);
+        if (url?.endsWith(".js")) {
+          res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        }
+        if (!fs.existsSync(p)) {
+          res.writeHead(404);
+          res.write("404 Not Found");
+          res.end();
+          return;
+        }
+        res.writeHead(200);
+        res.write(fs.readFileSync(p));
+        res.end();
+      } catch (e) {
+        log.error(e);
+        res.writeHead(500);
+        res.write("500 Internal Server Error\n");
+        res.write(e instanceof Error ? e.stack : String(e));
+        res.end();
       }
-      res.writeHead(200);
-      res.write(fs.readFileSync(p));
-      res.end();
     }
   );
   server.on("error", (err) => {
     log.error(err);
   });
-  server.listen(3031);
+  server.listen(3031, () => {
+    log.info("Bilibili server is running on https://localhost:3031");
+  });
+  global.server = server
   app.commandLine.appendSwitch(
     "host-rules",
     "MAP bilipc.bilibili.com localhost:3031"
