@@ -29,16 +29,9 @@ notice "解密"
 notice "====app.js===="
 
 notice "屏蔽检测"
-# grep -lr 'if (!dj' --exclude="app.asar" .
-# sed -i 's#if (!dj#if(false\&\&!dj#g' "app/main/app.js"
-# ==='win';if(! 警告11
-grep -lr 'if (!jy)' --exclude="app.asar" .
-sed -i 's#if (!jy)#if(false\&\&!jy)#' "app/main/app.js"
-# global['bootstrapApp']();
-# grep -lr 'if (dj)' --exclude="app.asar" .
-# sed -i 's#if (dj)#if(!dj)#' "app/main/app.js"
-#grep -lr '};!fb' --exclude="app.asar" .
-#sed -i 's#};!fb#};false\&\&!fb#' "app/main/app.js"
+# v1.17.9+: platform check now explicitly allows Linux (jS !== "linux" guard)
+# Old patterns (if (!jy), if (!dj), if (dj), };!fb) no longer exist in decoded app.js
+# No patching needed — the detection code permits Linux natively.
 
 # notice "路由"
 # cat "$root_dir/res/scripts/inject-biliapp.js" >> app/render/assets/biliapp.*.js
