@@ -384,7 +384,7 @@ export const registerIpcHandle = () => {
       IS_LINUX: true,
       IS_DEV: false,
       IS_RELEASE: true,
-      APP_VERSION: '1.17.5.4665',
+      APP_VERSION: '1.17.9.4828',
       IS_DEV_M: false,
       JSB_PRELOAD_URL: 'bili-preload.js',
       appId: '',
