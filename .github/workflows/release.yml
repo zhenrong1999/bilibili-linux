@@ -30,7 +30,7 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - name: Use Node.js
@@ -57,9 +57,9 @@ jobs:
             name='${{ github.ref_name }}'
           fi
           echo "tag result: $tag - $name"
-          echo "::set-output name=tag::$tag"
-          echo "::set-output name=name::$name"
-         
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "name=$name" >> $GITHUB_OUTPUT
+
       - name: Build
         env:
           BUILD_ARCH: ${{ matrix.ARCH }}
@@ -259,7 +259,7 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -289,9 +289,9 @@ jobs:
             name='${{ github.ref_name }}'
           fi
           echo "tag result: $tag - $name"
-          echo "::set-output name=tag::$tag"
-          echo "::set-output name=name::$name"
-         
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "name=$name" >> $GITHUB_OUTPUT
+
       - name: Build
         env:
           BUILD_VERSION: ${{ steps.tag.outputs.tag }}
@@ -542,8 +542,8 @@ jobs:
             name='${{ github.ref_name }}'
           fi
           echo "tag result: $tag - $name"
-          echo "::set-output name=tag::$tag"
-          echo "::set-output name=name::$name"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "name=$name" >> $GITHUB_OUTPUT
 
       - name: Create release and upload artifacts
         if: startsWith(github.ref, 'refs/heads/')
