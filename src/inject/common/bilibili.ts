@@ -42,12 +42,13 @@ export const createBilibiliServer = () => {
   server.on("error", (err) => {
     log.error(err);
   });
-  server.listen(3031, () => {
-    log.info("Bilibili server is running on https://localhost:3031");
+  server.listen(0, () => {
+    const port = (server.address() as any).port;
+    log.info(`Bilibili server is running on https://localhost:${port}`);
+    app.commandLine.appendSwitch(
+      "host-rules",
+      `MAP bilipc.bilibili.com localhost:${port}`
+    );
   });
   global.server = server
-  app.commandLine.appendSwitch(
-    "host-rules",
-    "MAP bilipc.bilibili.com localhost:3031"
-  );
 };
