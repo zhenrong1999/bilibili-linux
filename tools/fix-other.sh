@@ -29,11 +29,11 @@ notice "解密"
 notice "====app.js===="
 
 notice "屏蔽检测"
-# v1.17.9+: platform check now explicitly allows Linux (jS !== "linux" guard)
-grep -lr 'if (!dC)' --exclude="app.asar" .
-sed -i 's#if (!dC)#if(false\&\&!dC)#' "app/main/app.js"
+# v1.18.0+: platform check now explicitly allows Linux (jS !== "linux" guard)
+grep -lr 'if (!dB)' --exclude="app.asar" .
+sed -i 's#if (!dB)#if(false\&\&!dB)#' "app/main/app.js"
 # if (!jT
-sed -i 's#if (!jT#if (false\&\&!jT#' "app/main/app.js"
+sed -i 's#if (!k4#if (false\&\&!k4#' "app/main/app.js"
 
 # notice "路由"
 # cat "$root_dir/res/scripts/inject-biliapp.js" >> app/render/assets/biliapp.*.js
