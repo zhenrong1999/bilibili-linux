@@ -2,7 +2,7 @@ import { createLogger } from "../../common/log";
 import https from "https";
 import path from "path";
 import fs from "fs";
-import { app } from "electron";
+import { app, session } from "electron";
 
 const log = createLogger("Bilibili");
 export const createBilibiliServer = () => {
@@ -51,4 +51,29 @@ export const createBilibiliServer = () => {
     );
   });
   global.server = server
+  // Chromium 150+ no longer fully trusts --ignore-certificate-errors for
+  // certificate verification in navigation. Explicitly allow self-signed certs
+  // for the local HTTPS server (mapped from bilipc.bilibili.com).
+  app.on("certificate-error", (event, _webContents, url, _error, _certificate, callback) => {
+    if (url.startsWith("https://bilipc.bilibili.com") || url.startsWith("https://localhost")) {
+      event.preventDefault();
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+  // Chromium 150 NetworkService honors the system proxy. bilipc.bilibili.com is
+  // host-rules-mapped to localhost; routed through the proxy it cannot be
+  // resolved (NXDOMAIN) and the proxy closes the connection -> ERR_CONNECTION_CLOSED
+  // (-100) -> blank window. Force bilipc + loopback to bypass the proxy.
+  app.whenReady().then(() => {
+    const proxyUrl = (
+      process.env.HTTPS_PROXY || process.env.HTTP_PROXY ||
+      process.env.https_proxy || process.env.http_proxy || ""
+    ).trim();
+    session.defaultSession.setProxy({
+      proxyRules: proxyUrl.replace(/^https?:\/\//i, "").replace(/\/+$/, "") || undefined,
+      proxyBypassRules: "bilipc.bilibili.com,localhost,127.0.0.1",
+    }).catch(() => {});
+  });
 };
