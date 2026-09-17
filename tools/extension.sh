@@ -31,6 +31,9 @@ notice "复制拓展"
 mkdir -p "$root_dir/app/extensions"
 cp -r "$root_dir/dist/extension" "$root_dir/app/extensions/bilibili"
 
+notice "复制线程撕裂者"
+cp -r "$root_dir/res/extensions/thread-ripper" "$root_dir/app/extensions/thread-ripper"
+
 notice "复制AI脚本"
 cp "$root_dir/res/scripts/transcribe.py" "$root_dir/app"
 cd "$res_dir"

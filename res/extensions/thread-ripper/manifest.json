@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "Bilibili 线程撕裂者",
+  "short_name": "线程撕裂者",
+  "version": "0.9.1.3",
+  "description": "保留哔哩哔哩原生播放器，通过多 CDN、多 Range 并发下载改善视频缓冲速度。",
+  "minimum_chrome_version": "114",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://comment.bilibili.com/*",
+    "https://api.bilibili.com/*",
+    "https://*.hdslb.com/*"
+  ],
+  "background": {
+    "service_worker": "src/service-worker.js"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.bilibili.com/*",
+        "https://m.bilibili.com/*"
+      ],
+      "js": [
+        "src/range-core.js",
+        "src/cdn-resolver.js",
+        "src/sidx.js",
+        "src/idm-downloader.js",
+        "src/native-mse-player.js",
+        "src/runtime-notices.js",
+        "src/page-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.bilibili.com/*"
+      ],
+      "js": [
+        "src/notification-view.js",
+        "src/bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    }
+  ]
+}

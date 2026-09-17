@@ -519,8 +519,20 @@ export const registerExtension = () => {
       allowFileAccess: true,
     })
     .then(({ id }) => {
-      // ...
       log.info("-----Load Extension:", id);
+    })
+    .catch((e) => {
+      log.error("load bilibili extension failed:", e);
+    });
+  session.defaultSession
+    .loadExtension(extPath + "/thread-ripper", {
+      allowFileAccess: true,
+    })
+    .then(({ id }) => {
+      log.info("-----Load Extension:", id);
+    })
+    .catch((e) => {
+      log.error("load thread-ripper extension failed:", e);
     });
 };
 
