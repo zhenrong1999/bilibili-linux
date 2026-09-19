@@ -42,7 +42,7 @@ commits: a294bc7046fabd2f68f09ae74794ecc9f9c38fdb..74fbc6a3d3e08d91bd0d96c2f6b95
 | `chrome.sidePanel` | 不支持 | 从 manifest 移除 `sidePanel` permission 和 `side_panel` 配置 |
 | `chrome.action.setBadgeText` | 有限支持 | service worker 中 guard 掉 badge 调用 |
 | `chrome.tabs.onUpdated` | 可能不支持 | guard 掉（review L1 修复） |
-| `chrome.storage.sync` | 支持 | 保留 |
+| `chrome.storage.sync` | 不支持 | 全部改用 `chrome.storage.local` |
 | `chrome.runtime.sendMessage` | 支持 | 保留 |
 | service worker subtitle fetch | 支持 | 保留（弹幕/字幕代理） |
 | `popup/` 侧边栏 | 不需要 | 不复制 |

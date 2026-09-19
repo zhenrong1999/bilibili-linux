@@ -69,17 +69,13 @@ function setThreadBadge(tabId, enabled, activeThreads) {
   ]).catch((error) => console.error("无法更新线程徽标", error));
 }
 
-// 0.9.1.2 moves existing users once to mainland CDN, 8 threads and hidden error notices.
-// Other settings are kept. A fresh install already starts with these defaults.
-const SETTINGS_REVISION = 2;
+// ponytail: Electron never had working sync storage; pre-existing local keys are current-era, not 0.9.1.2 legacy.
+const SETTINGS_REVISION = 3;
 async function migrateSettings() {
-  const stored = await chrome.storage.sync.get(null);
+  const stored = (await chrome.storage.local.get(null)) ?? {};
   if (stored.settingsRevision === SETTINGS_REVISION) return;
-  const existing = Object.keys(stored).some((key) => key !== "settingsRevision");
-  await chrome.storage.sync.set({
-    settingsRevision: SETTINGS_REVISION,
-    ...(existing ? { mode: "mainland", concurrency: 8, errorNotices: false } : {})
-  });
+  // Only stamp revision — do not clobber settings that onboarding/page-hook may have already written
+  await chrome.storage.local.set({ settingsRevision: SETTINGS_REVISION });
 }
 
 function prepareExtension() {

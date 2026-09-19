@@ -212,7 +212,7 @@
       save.disabled = true;
       save.textContent = "正在保存…";
       latestSettings = normalizeStoredSettings({ ...latestSettings, enabled: true, mode, compatibilityMode, concurrency });
-      chrome.storage.sync.set({ enabled: true, mode, compatibilityMode, concurrency }, () => {
+      chrome.storage.local.set({ enabled: true, mode, compatibilityMode, concurrency }, () => {
         if (chrome.runtime.lastError) {
           status.textContent = `保存失败：${chrome.runtime.lastError.message}`;
           save.disabled = false;
@@ -463,15 +463,16 @@
     }
   }
 
-  chrome.storage.sync.get(null, (stored) => {
+  chrome.storage.local.get(null, (stored) => {
+    if (!stored) stored = {};
     const migrated = { ...DEFAULTS, ...stored };
     if (!stored.danmaku && stored.danmakuFontSize !== undefined) {
       migrated.danmaku = { ...DEFAULT_DANMAKU, fontSize: stored.danmakuFontSize };
     }
     latestSettings = normalizeStoredSettings(migrated);
-    if (Object.prototype.hasOwnProperty.call(stored, "statusNotice")) chrome.storage.sync.remove("statusNotice");
+    if (Object.prototype.hasOwnProperty.call(stored, "statusNotice")) chrome.storage.local.remove("statusNotice");
     if (JSON.stringify(stored.debugCategories) !== JSON.stringify(latestSettings.debugCategories) || stored.errorNotices !== latestSettings.errorNotices || stored.debugNotices !== latestSettings.debugNotices || stored.mode !== latestSettings.mode || stored.compatibilityMode !== latestSettings.compatibilityMode || stored.concurrency !== latestSettings.concurrency || stored.volume !== latestSettings.volume || stored.subtitleLanguage !== latestSettings.subtitleLanguage || stored.subtitleLastLanguage !== latestSettings.subtitleLastLanguage || JSON.stringify(stored.danmaku) !== JSON.stringify(latestSettings.danmaku)) {
-      chrome.storage.sync.set({
+      chrome.storage.local.set({
         mode: latestSettings.mode,
         compatibilityMode: latestSettings.compatibilityMode,
         debugNotices: latestSettings.debugNotices,
@@ -493,7 +494,7 @@
   });
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== "sync") return;
+    if (areaName !== "local") return;
     for (const key of Object.keys(DEFAULTS)) {
       if (changes[key]) latestSettings[key] = changes[key].newValue;
     }
@@ -559,7 +560,7 @@
       if (/^[\w-]+$/i.test(String(input.subtitleLanguage || ""))) update.subtitleLanguage = String(input.subtitleLanguage).slice(0, 48);
       if (input.subtitleLastLanguage === "") update.subtitleLastLanguage = "";
       else if (/^[\w-]+$/i.test(String(input.subtitleLastLanguage || "")) && String(input.subtitleLastLanguage).toLowerCase() !== "off") update.subtitleLastLanguage = String(input.subtitleLastLanguage).slice(0, 48);
-      if (Object.keys(update).length) chrome.storage.sync.set(update);
+      if (Object.keys(update).length) chrome.storage.local.set(update);
       return;
     }
     if (event.data.type !== "stats") return;

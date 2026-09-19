@@ -1,12 +1,11 @@
 import { Button, Card, Col, Row, Select, Switch } from "antd"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createLogger } from "../../../../common/log"
 import useNotification from "antd/es/notification/useNotification"
 import { useTranslation } from "react-i18next"
 
 const log = createLogger("thread-ripper")
-
-const STORAGE_KEYS: string[] = ["enabled", "mode", "concurrency", "compatibilityMode"]
+const CHANNEL = "__BILI_RANGE_ACCELERATOR_V1__"
 
 interface ThreadRipperSettings {
   compatibilityMode: "off" | "a" | "b"
@@ -22,26 +21,52 @@ const DEFAULTS: ThreadRipperSettings = {
   mode: "mainland",
 }
 
+function normalize(payload: Record<string, unknown>): ThreadRipperSettings {
+  const conc = Number(payload.concurrency)
+  const mode = String(payload.mode)
+  const compat = String(payload.compatibilityMode)
+  return {
+    enabled: payload.enabled !== false,
+    mode: mode === "overseas" ? "overseas" : "mainland",
+    concurrency: [4, 8, 16, 32, 64, 128].includes(conc) ? conc : 8,
+    compatibilityMode: compat === "a" || compat === "b" ? compat : "off",
+  }
+}
+
 export default function ThreadRipper() {
   const { t } = useTranslation()
   const [notify, ctx] = useNotification()
   const [settings, setSettings] = useState<ThreadRipperSettings>(DEFAULTS)
   const [loaded, setLoaded] = useState(false)
+  const loadedRef = useRef(false)
 
   useEffect(() => {
-    chrome.storage.sync.get(STORAGE_KEYS, (stored: Record<string, unknown>) => {
-      log.info("loaded settings:", stored)
-      const conc = Number(stored.concurrency)
-      const mode = String(stored.mode)
-      const compat = String(stored.compatibilityMode)
-      setSettings({
-        enabled: stored.enabled !== false,
-        mode: mode === "overseas" ? "overseas" : "mainland",
-        concurrency: [4, 8, 16, 32, 64, 128].includes(conc) ? conc : 8,
-        compatibilityMode: compat === "a" || compat === "b" ? compat : "off",
-      })
-      setLoaded(true)
-    })
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== window || event.data?.channel !== CHANNEL) return
+      if (event.data.type === "settings") {
+        const next = normalize(event.data.payload || {})
+        log.info("received settings:", next)
+        setSettings(next)
+        if (!loadedRef.current) {
+          loadedRef.current = true
+          setLoaded(true)
+        }
+      }
+    }
+    window.addEventListener("message", onMessage)
+    // Request current settings by asking bridge to re-broadcast
+    // bridge.js sends "settings" on storage load and on every settings-update
+    // If thread-ripper isn't loaded, we fall back to defaults after a short wait
+    const timer = setTimeout(() => {
+      if (!loadedRef.current) {
+        loadedRef.current = true
+        setLoaded(true)
+      }
+    }, 2000)
+    return () => {
+      window.removeEventListener("message", onMessage)
+      clearTimeout(timer)
+    }
   }, [])
 
   const update = (key: keyof ThreadRipperSettings, value: boolean | number | string) => {
@@ -49,14 +74,19 @@ export default function ThreadRipper() {
   }
 
   const save = () => {
-    chrome.storage.sync.set(settings, () => {
-      if (chrome.runtime.lastError) {
-        notify.error({ message: t("保存失败"), description: chrome.runtime.lastError.message })
-        return
-      }
-      log.info("saved:", settings)
-      notify.info({ message: t("设置已保存") })
-    })
+    // Send via thread-ripper's own channel — bridge.js writes to its chrome.storage.local
+    window.postMessage({
+      channel: CHANNEL,
+      type: "settings-update",
+      payload: {
+        enabled: settings.enabled,
+        mode: settings.mode,
+        concurrency: settings.concurrency,
+        compatibilityMode: settings.compatibilityMode,
+      },
+    }, "*")
+    log.info("sent settings-update:", settings)
+    notify.info({ message: t("设置已保存") })
   }
 
   if (!loaded) return null
