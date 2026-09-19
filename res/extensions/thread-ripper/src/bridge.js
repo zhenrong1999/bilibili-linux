@@ -547,7 +547,7 @@
       return;
     }
     if (event.data.type === "settings-request") {
-      postSettings();
+      if (loaded) postSettings();
       return;
     }
     if (event.data.type === "settings-update") {

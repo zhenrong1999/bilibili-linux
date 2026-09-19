@@ -78,6 +78,18 @@ export default {
   "PAC代理": "PAC Proxy",
   "例如": "e.g.",
   "Access Token管理": "Access Token Management",
-  "AccessToken用于获取外区番剧的播放链接。": "AccessToken is used to get playback links for overseas anime."
+  "AccessToken用于获取外区番剧的播放链接。": "AccessToken is used to get playback links for overseas anime.",
+  "线程撕裂者": "Thread Ripper",
+  "CDN模式": "CDN Mode",
+  "大陆CDN（推荐）": "Mainland CDN (Recommended)",
+  "海外CDN": "Overseas CDN",
+  "并发线程": "Concurrency",
+  "兼容模式": "Compatibility Mode",
+  "标准模式": "Standard",
+  "兼容模式 A": "Compatibility A",
+  "兼容模式 B": "Compatibility B",
+  "未检测到线程撕裂者": "Thread Ripper not detected",
+  "设置可能不会生效": "Settings may not take effect",
+  "未检测到线程撕裂者，设置可能不会生效": "Thread Ripper not detected; settings may not take effect"
 }
 
