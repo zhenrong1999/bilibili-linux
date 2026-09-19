@@ -38,7 +38,8 @@ export default function ThreadRipper() {
   const [notify, ctx] = useNotification()
   const [settings, setSettings] = useState<ThreadRipperSettings>(DEFAULTS)
   const [loaded, setLoaded] = useState(false)
-  const loadedRef = useRef(false)
+  const [hasRealSettings, setHasRealSettings] = useState(false)
+  const receivedRef = useRef(false)
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -47,21 +48,17 @@ export default function ThreadRipper() {
         const next = normalize(event.data.payload || {})
         log.info("received settings:", next)
         setSettings(next)
-        if (!loadedRef.current) {
-          loadedRef.current = true
-          setLoaded(true)
-        }
+        receivedRef.current = true
+        setHasRealSettings(true)
+        setLoaded(true)
       }
     }
     window.addEventListener("message", onMessage)
-    // Request current settings by asking bridge to re-broadcast
-    // bridge.js sends "settings" on storage load and on every settings-update
-    // If thread-ripper isn't loaded, we fall back to defaults after a short wait
+    // Request current settings from thread-ripper's bridge
+    window.postMessage({ channel: CHANNEL, type: "settings-request" }, "*")
+    // Fallback: if thread-ripper isn't loaded, show defaults after a short wait
     const timer = setTimeout(() => {
-      if (!loadedRef.current) {
-        loadedRef.current = true
-        setLoaded(true)
-      }
+      if (!receivedRef.current) setLoaded(true)
     }, 2000)
     return () => {
       window.removeEventListener("message", onMessage)
@@ -74,7 +71,6 @@ export default function ThreadRipper() {
   }
 
   const save = () => {
-    // Send via thread-ripper's own channel — bridge.js writes to its chrome.storage.local
     window.postMessage({
       channel: CHANNEL,
       type: "settings-update",
@@ -86,7 +82,11 @@ export default function ThreadRipper() {
       },
     }, "*")
     log.info("sent settings-update:", settings)
-    notify.info({ message: t("设置已保存") })
+    if (hasRealSettings) {
+      notify.info({ message: t("设置已保存") })
+    } else {
+      notify.warning({ message: t("未检测到线程撕裂者"), description: t("设置可能不会生效") })
+    }
   }
 
   if (!loaded) return null
@@ -95,6 +95,13 @@ export default function ThreadRipper() {
     <>
       {ctx}
       <Card title={t("线程撕裂者")}>
+        {!hasRealSettings && (
+          <Row style={{ marginBottom: 12 }}>
+            <Col>
+              <span style={{ color: "#faad14" }}>{t("未检测到线程撕裂者，设置可能不会生效")}</span>
+            </Col>
+          </Row>
+        )}
         <Row>
           <Col span={6}>{t("功能开关")}：</Col>
           <Col>

@@ -546,10 +546,15 @@
       );
       return;
     }
+    if (event.data.type === "settings-request") {
+      postSettings();
+      return;
+    }
     if (event.data.type === "settings-update") {
       const input = event.data.payload;
       if (!input || typeof input !== "object") return;
       const update = {};
+      if (typeof input.enabled === "boolean") update.enabled = input.enabled;
       if (input.mode === "mainland" || input.mode === "overseas") update.mode = input.mode;
       if (["off", "a", "b"].includes(input.compatibilityMode)) update.compatibilityMode = input.compatibilityMode;
       const concurrency = Math.trunc(Number(input.concurrency));
