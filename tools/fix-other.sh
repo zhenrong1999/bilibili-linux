@@ -29,13 +29,14 @@ notice "解密"
 notice "====app.js===="
 
 notice "屏蔽检测"
-# grep -lr 'if (!dj' --exclude="app.asar" .
-# sed -i 's#if (!dj#if(false\&\&!dj#g' "app/main/app.js"
-# ==='win';if(! 警告11
-grep -lr 'if (!k4' --exclude="app.asar" .
-sed -i 's#if (!k4#if(false\&\&!k4#' "app/main/app.js"
-# if (!jT
-sed -i 's#if (!jT#if (false\&\&!jT#' "app/main/app.js"
+# Bypass patterns for Bilibili 1.19.0.5056
+# Variable names verified via docs/bypass-detection.md procedure:
+#   dC = integrity check (isPackaged + .appkey hash)
+#   jT = platform guard (mac/win check)
+# See docs/bypass-detection.md for how to re-find these after client updates.
+grep -lr 'if (!dC' --exclude="app.asar" . || true
+sed -i 's#if (!dC)#if(false\&\&!dC)#' "app/main/app.js" 2>/dev/null || true
+sed -i 's#if (!jT#if (false\&\&!jT#' "app/main/app.js" 2>/dev/null || true
 
 # notice "路由"
 # cat "$root_dir/res/scripts/inject-biliapp.js" >> app/render/assets/biliapp.*.js

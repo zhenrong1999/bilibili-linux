@@ -1,5 +1,12 @@
 # 屏蔽检测 Bypass — v1.17.9+
 
+## Version History
+
+| Bilibili version | Integrity var | Platform guard | Notes |
+|-----------------|---------------|----------------|-------|
+| 1.17.9 – 1.18.x | `dC` / `k4` (varied) | `jT` | Names changed between minor releases |
+| **1.19.0.5056** | **`dC`** | **`jT`** | Verified 2026-09-19; `k4` no longer present |
+
 ## What Changed
 
 Bilibili v1.17.9 rewrote the platform detection logic. The old blanket `if (!jy)` check is gone, replaced by two distinct checks:
